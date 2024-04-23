@@ -6,7 +6,7 @@ extern crate piston;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::event_loop::{EventSettings, Events};
-use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
+use piston::input::{RenderArgs, RenderEvent};
 use piston::window::WindowSettings;
 
 
@@ -20,16 +20,10 @@ pub struct App {
 impl App {
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
-    
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-    
-        let p1 = [0.0, 0.0];
-        let p2 = [50.0, 50.0];
-    
-        self.gl.draw(args.viewport(), |c, gl| {
+        self.gl.draw(args.viewport(), |c: Context, gl| {
             // Clear the screen.
-            clear(GREEN, gl);
+            const DARK_GRAY: [f32; 4] = [0.3, 0.3, 0.3, 1.0];
+            clear(DARK_GRAY, gl);
         });
         self.my_curve.render(args, &mut self.gl);
     }
@@ -50,7 +44,7 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         // bezier curve with 4 points.
-        my_curve: Bezier{control_points: 4}
+        my_curve: Bezier::new(),
     };
 
     let mut events = Events::new(EventSettings::new());

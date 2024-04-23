@@ -10,21 +10,42 @@ pub struct ControlPoint {
 }
 pub struct Bezier {
     // collection of control points
-    pub control_points: u32
+    pub control_points: Vec<ControlPoint>,
+    pub color: [f32; 4],
 }
-
 impl Bezier {
+    pub fn new() -> Bezier {
+        // return a new Bezier curve with 4 control points near the center of the screen
+        let p = vec![
+            ControlPoint {
+                position: [100.0, 100.0],
+            },
+            ControlPoint {
+                position: [200.0, 100.0],
+            },
+            ControlPoint {
+                position: [200.0, 200.0],
+            },
+            ControlPoint {
+                position: [100.0, 200.0],
+            },
+        ];
+        Bezier {
+            control_points: p,
+            color: [1.0, 0.0, 0.0, 1.0],
+        }
+    }
+
     pub fn render(&self, args: &RenderArgs, gl: &mut GlGraphics) {
         use graphics::*;
-    
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-    
-        let p1 = [0.0, 0.0];
-        let p2 = [50.0, 50.0];
-    
-        gl.draw(args.viewport(), |c, gl| {
-            line(RED, 1.0, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
-        });
+       // draw a line between every control point
+        for i in 0..self.control_points.len() {
+            let j = (i + 1) % self.control_points.len();
+            let p1 = self.control_points[i].position;
+            let p2 = self.control_points[j].position;
+            gl.draw(args.viewport(), |c, gl| {
+                line(self.color, 1.0, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
+            });
+        }
     }
 }
