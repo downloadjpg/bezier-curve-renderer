@@ -12,6 +12,7 @@ use piston::window::WindowSettings;
 
 mod bezier;
 use bezier::Bezier;
+use piston::{Button, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     my_curve: Bezier,
@@ -48,9 +49,25 @@ fn main() {
     };
 
     let mut events = Events::new(EventSettings::new());
+    let mut cursor = [0.0, 0.0];
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
             app.render(&args);
+        }
+
+        // Handle mouse input
+        // if the left mouse button is pressed, call self.my_curve.click(x,y) with the mouse's current position
+        if let Some(Button::Mouse(MouseButton::Left)) = e.press_args() {
+            app.my_curve.click(cursor[0], cursor[1]);
+        }
+
+        if let Some(Button::Mouse(MouseButton::Left)) = e.release_args() {
+            app.my_curve.release();
+        }
+
+        if let Some(args) = e.mouse_cursor_args() {
+            cursor = args;
+            app.my_curve.drag(args[0], args[1]);
         }
     }
 }
