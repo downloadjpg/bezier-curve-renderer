@@ -9,8 +9,12 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
 
+
+mod bezier;
+use bezier::Bezier;
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
+    my_curve: Bezier,
 }
 
 impl App {
@@ -26,11 +30,8 @@ impl App {
         self.gl.draw(args.viewport(), |c, gl| {
             // Clear the screen.
             clear(GREEN, gl);
-    
-            // Draw a line from p1 to p2.
-
-            line(RED, 1.0, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
         });
+        self.my_curve.render(args, &mut self.gl);
     }
 }
 
@@ -48,7 +49,8 @@ fn main() {
     // Create a new game and run it.
     let mut app = App {
         gl: GlGraphics::new(opengl),
-        rotation: 0.0,
+        // bezier curve with 4 points.
+        my_curve: Bezier{control_points: 4}
     };
 
     let mut events = Events::new(EventSettings::new());
