@@ -10,8 +10,8 @@ pub struct ControlPoint {
 }
 pub struct Bezier {
     // collection of control points
-    pub control_points: Vec<ControlPoint>,
-    pub color: [f32; 4],
+    control_points: Vec<ControlPoint>,
+    selected_point: Option<usize>, // index of a control point actively clicked on
 }
 impl Bezier {
     pub fn new() -> Bezier {
@@ -32,19 +32,39 @@ impl Bezier {
         ];
         Bezier {
             control_points: p,
-            color: [1.0, 0.0, 0.0, 1.0],
+            selected_point: None,
         }
     }
 
     pub fn render(&self, args: &RenderArgs, gl: &mut GlGraphics) {
+
         use graphics::*;
        // draw a line between every control point
-        for i in 0..self.control_points.len() {
-            let j = (i + 1) % self.control_points.len();
+        for i in 0..(self.control_points.len() - 1) {
+            let j = (i + 1);
             let p1 = self.control_points[i].position;
             let p2 = self.control_points[j].position;
             gl.draw(args.viewport(), |c, gl| {
-                line(self.color, 1.0, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
+                line(Self::LINE_COLOR, Self::LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
+            });
+        }
+
+        // draw the control points as boxes
+        for cp in &self.control_points {
+            let pos = cp.position;
+            let rect = [
+                pos[0] - Self::BOX_SIZE / 2.0,
+                pos[1] - Self::BOX_SIZE / 2.0,
+                Self::BOX_SIZE, Self::BOX_SIZE
+            ];
+            
+            gl.draw(args.viewport(), |c, gl| {
+                rectangle(
+                    Self::BOX_COLOR,
+                    rect, // x, y, width, height
+                    c.transform,
+                    gl,
+                );
             });
         }
     }
