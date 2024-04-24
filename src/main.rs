@@ -11,11 +11,13 @@ use piston::window::WindowSettings;
 
 
 mod bezier;
+mod bezierSpline;
 use bezier::CubicBezier;
+use bezierSpline::BezierSpline;
 use piston::{Button, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    my_curve: CubicBezier,
+    my_curve: BezierSpline,
 }
 
 impl App {
@@ -45,7 +47,7 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         // bezier curve with 4 points.
-        my_curve: CubicBezier::new(),
+        my_curve: BezierSpline::new(),
     };
 
     let mut events = Events::new(EventSettings::new());
@@ -59,6 +61,13 @@ fn main() {
         // if the left mouse button is pressed, call self.my_curve.click(x,y) with the mouse's current position
         if let Some(Button::Mouse(MouseButton::Left)) = e.press_args() {
             app.my_curve.click(cursor[0], cursor[1]);
+        }
+
+        if let Some(Button::Keyboard(key)) = e.press_args() {
+            match key {
+                piston::Key::Space => app.my_curve.add_curve(),
+                _ => {}
+            }
         }
 
         if let Some(Button::Mouse(MouseButton::Left)) = e.release_args() {

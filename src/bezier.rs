@@ -1,11 +1,11 @@
-use opengl_graphics::{GlGraphics, GLSL};
+use opengl_graphics::GlGraphics;
 use piston::input::RenderArgs;
 
 
 pub struct CubicBezier {
     // collection of control points
-    control_points: [[f64; 2]; 4],
-    selected_point: Option<usize>, // index of a control point actively clicked on
+    pub control_points: [[f64; 2]; 4],
+    pub selected_point: Option<usize>, // index of a control point actively clicked on
 }
 impl CubicBezier { // Initialization
     const BOX_SIZE: f64 = 10.0;
