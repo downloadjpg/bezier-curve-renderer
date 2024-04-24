@@ -11,11 +11,11 @@ use piston::window::WindowSettings;
 
 
 mod bezier;
-use bezier::Bezier;
+use bezier::CubicBezier;
 use piston::{Button, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    my_curve: Bezier,
+    my_curve: CubicBezier,
 }
 
 impl App {
@@ -45,7 +45,7 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         // bezier curve with 4 points.
-        my_curve: Bezier::new(),
+        my_curve: CubicBezier::new(),
     };
 
     let mut events = Events::new(EventSettings::new());
