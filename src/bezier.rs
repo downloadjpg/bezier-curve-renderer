@@ -1,4 +1,4 @@
-use opengl_graphics::GlGraphics;
+use opengl_graphics::{GlGraphics, GLSL};
 use piston::input::RenderArgs;
 
 
@@ -29,21 +29,35 @@ impl CubicBezier { // Initialization
 }
 impl CubicBezier { // Rendering
     pub fn render(&self, args: &RenderArgs, gl: &mut GlGraphics) {
+        self.render_cage(args, gl);
+        self.render_curve(args, gl);
+        self.render_control_points(args, gl);
 
+    }
+
+    fn render_control_points(&self, args: &RenderArgs, gl: &mut GlGraphics) {
+        // draw the control points as boxes
         use graphics::*;
-        
-        //draw a line between every control point (cage)
-        for segment in self.control_points.windows(2) {
-            let p1 = segment[0];
-            let p2 = segment[1];
+        for pos in &self.control_points {
+            let rect = [
+                pos[0] - Self::BOX_SIZE / 2.0,
+                pos[1] - Self::BOX_SIZE / 2.0,
+                Self::BOX_SIZE, Self::BOX_SIZE
+            ];
             gl.draw(args.viewport(), |c, gl| {
-                line(Self::LINE_COLOR, Self::LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
+                rectangle(
+                    Self::BOX_COLOR,
+                    rect, // x, y, width, height
+                    c.transform,
+                    gl,
+                );
             });
         }
+    }
 
-        // 
-
+    fn render_curve(&self, args: &RenderArgs, gl: &mut GlGraphics) {
         // generate a list of points on the curve
+        use graphics::*;
         const NUM_POINTS: usize = 100;
         let mut points = [[0.0; 2]; NUM_POINTS];
         for i in 0..NUM_POINTS {
@@ -58,21 +72,17 @@ impl CubicBezier { // Rendering
                 line(Self::LINE_COLOR, Self::LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
             });
         }
+    }
 
-        // draw the control points as boxes
-        for pos in &self.control_points {
-            let rect = [
-                pos[0] - Self::BOX_SIZE / 2.0,
-                pos[1] - Self::BOX_SIZE / 2.0,
-                Self::BOX_SIZE, Self::BOX_SIZE
-            ];
+    fn render_cage(&self, args: &RenderArgs, gl: &mut GlGraphics) {
+        // render the control cage
+        use graphics::*;
+        //draw a line between every control point (cage)
+        for segment in self.control_points.windows(2) {
+            let p1 = segment[0];
+            let p2 = segment[1];
             gl.draw(args.viewport(), |c, gl| {
-                rectangle(
-                    Self::BOX_COLOR,
-                    rect, // x, y, width, height
-                    c.transform,
-                    gl,
-                );
+                line(Self::LINE_COLOR, Self::LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
             });
         }
     }
