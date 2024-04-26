@@ -7,9 +7,9 @@ use super::cubic_bezier::CubicBezier;
 use super::DisplayParameters;
 
 pub struct Spline {
-    segments : Vec<CubicBezier>,
-    display_parameters: DisplayParameters,
-    links: Vec<Link>,
+    pub segments : Vec<CubicBezier>,
+    pub display_parameters: DisplayParameters,
+    pub links: Vec<Link>,
 }
 
 type Link = (usize, usize); // (start, end)
