@@ -13,14 +13,14 @@ use piston::input::{RenderArgs, RenderEvent};
 use piston::window::WindowSettings;
 
 use crate::color_palettes::{Palette, NORD, FLAT};
-use cubic_bezier::CubicBezier;
+use cubic_bezier::{CubicBezier, Spline};
 
 
 // 
 use piston::{Button, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    my_curve: CubicBezier,
+    my_curve: Spline,
     palette: Palette
 }
 
@@ -53,7 +53,7 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         // bezier curve with 4 points.
-        my_curve: CubicBezier::new(),
+        my_curve: Spline::new_default(),
         palette: NORD,
     };
 
