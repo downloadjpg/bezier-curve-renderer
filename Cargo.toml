@@ -3,8 +3,7 @@
 name = "spinning-square"
 version = "0.1.0"
 authors = [
-    "TyOverby <ty@pre-alpha.com>",
-    "Nikita Pekin <contact@nikitapek.in>"
+    "Brody Foster"
 ]
 
 [[bin]]
@@ -15,4 +14,5 @@ piston = "0.55.0"
 piston2d-graphics = "0.44.0"
 pistoncore-glutin_window = "0.72.0"
 piston2d-opengl_graphics = "0.84.0"
-egui = "0.15.0"
+conrod_core = "0.76.1"
+conrod_piston = "0.76.1"
