@@ -1,6 +1,10 @@
 use opengl_graphics::GlGraphics;
 use piston::input::RenderArgs;
-use crate::cubic_bezier::CubicBezier;
+
+use crate::color_palettes::{Palette, FLAT, NORD};
+
+use super::cubic_bezier::CubicBezier;
+use super::DisplayParameters;
 
 pub struct Spline {
     segments : Vec<CubicBezier>,
@@ -9,13 +13,6 @@ pub struct Spline {
 }
 
 type Link = (usize, usize); // (start, end)
-
-pub struct DisplayParameters {
-    draw_cage : bool,
-    draw_curve : bool,
-    draw_control_points : bool,
-    draw_tangents : bool,
-}
 
 impl Spline {
     pub fn new() -> Self {

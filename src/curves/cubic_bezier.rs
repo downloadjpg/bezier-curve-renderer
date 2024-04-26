@@ -1,11 +1,12 @@
 use opengl_graphics::GlGraphics;
 use piston::input::RenderArgs;
 use crate::color_palettes::{Palette, FLAT, NORD};
-
+use super::DisplayParameters;
 pub struct CubicBezier {
     // collection of 4 control points
     pub control_points: [[f64; 2]; 4],
     pub selected_point: Option<usize>, // index of a control point actively clicked on
+    pub display_parameters: DisplayParameters,
     pub palette: Palette,
 }
 impl CubicBezier { // Initialization
@@ -20,6 +21,12 @@ impl CubicBezier { // Initialization
         CubicBezier {
             control_points: p,
             selected_point: None,
+            display_parameters: DisplayParameters {
+                draw_cage: true,
+                draw_curve: true,
+                draw_control_points: true,
+                draw_tangents: true,
+            },
             palette: NORD,
         }
     }
@@ -27,8 +34,7 @@ impl CubicBezier { // Initialization
     pub fn with_control_points(control_points: [[f64; 2]; 4]) -> Self {
         Self {
             control_points,
-            selected_point: None,
-            palette: NORD,
+            ..Self::new()
         }
     }
 }
@@ -38,9 +44,9 @@ impl CubicBezier { // Rendering
     const BOX_SIZE: f64 = 5.0;
 
     pub fn render(&self, args: &RenderArgs, gl: &mut GlGraphics) {
-        self.render_cage(args, gl);
-        self.render_curve(args, gl);
-        self.render_control_points(args, gl);
+        if self.display_parameters.draw_cage { self.render_cage(args, gl); }
+        if self.display_parameters.draw_curve { self.render_curve(args, gl); }
+        if self.display_parameters.draw_control_points { self.render_control_points(args, gl); }
 
     }
 

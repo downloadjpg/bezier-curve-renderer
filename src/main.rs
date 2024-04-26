@@ -1,27 +1,32 @@
-mod cubic_bezier;
 mod color_palettes;
+mod curves;
 
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
 extern crate piston;
+extern crate conrod;
 
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
+
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent};
 use piston::window::WindowSettings;
 
-use crate::color_palettes::{Palette, NORD, FLAT};
-use cubic_bezier::{CubicBezier, Spline};
+use conrod::{widget, Colorable, Positionable, Sizeable, Widget, Labelable};
+
+use curves::{Spline, DisplayParameters};
+use color_palettes::{Palette, FLAT, NORD};
 
 
-// 
 use piston::{Button, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     my_curve: Spline,
-    palette: Palette
+    palette: Palette,
+    ui: conrod::Ui,
+    ids: Ids,
 }
 
 impl App {
@@ -31,10 +36,18 @@ impl App {
         self.gl.draw(args.viewport(), |c: Context, gl| {
             // Clear the screen.
             clear(color, gl);
-        
         });
         // Render the curve.
-        self.my_curve.render(args, &mut self.gl); 
+        self.my_curve.render(args, &mut self.gl);
+
+        // Render the UI.
+        self.ui.draw_if_changed(|mut primitives| {
+            while let Some(primitive) = primitives.next() {
+                self.gl.draw(args.viewport(), |c, gl| {
+                    conrod::backend::piston::draw::primitives(primitive, c, gl);
+                })
+            }
+        }) 
     }
 }
 
@@ -55,6 +68,8 @@ fn main() {
         // bezier curve with 4 points.
         my_curve: Spline::new_default(),
         palette: NORD,
+        ui: conrod::UiBuilder::new([200.0, 200.0]).build(),
+        ids: Ids::new(app.ui.widget_id_generator()),
     };
 
     let mut events = Events::new(EventSettings::new());
