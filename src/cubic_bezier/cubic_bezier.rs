@@ -1,18 +1,14 @@
 use opengl_graphics::GlGraphics;
 use piston::input::RenderArgs;
-
+use crate::color_palettes::{Palette, FLAT, NORD};
 
 pub struct CubicBezier {
-    // collection of control points
+    // collection of 4 control points
     pub control_points: [[f64; 2]; 4],
     pub selected_point: Option<usize>, // index of a control point actively clicked on
+    pub palette: Palette,
 }
 impl CubicBezier { // Initialization
-    const BOX_SIZE: f64 = 10.0;
-    const BOX_COLOR: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-    const LINE_WIDTH: f64 = 1.0;
-    const LINE_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-
     pub fn new() -> CubicBezier {
         // return a new CubicBezier curve with 4 control points near the center of the screen
         let p = [
@@ -24,10 +20,23 @@ impl CubicBezier { // Initialization
         CubicBezier {
             control_points: p,
             selected_point: None,
+            palette: NORD,
+        }
+    }
+
+    pub fn with_control_points(control_points: [[f64; 2]; 4]) -> Self {
+        Self {
+            control_points,
+            selected_point: None,
+            palette: NORD,
         }
     }
 }
+
+
 impl CubicBezier { // Rendering
+    const BOX_SIZE: f64 = 5.0;
+
     pub fn render(&self, args: &RenderArgs, gl: &mut GlGraphics) {
         self.render_cage(args, gl);
         self.render_curve(args, gl);
@@ -46,7 +55,7 @@ impl CubicBezier { // Rendering
             ];
             gl.draw(args.viewport(), |c, gl| {
                 rectangle(
-                    Self::BOX_COLOR,
+                    self.palette.to_rgba(self.palette.primary),
                     rect, // x, y, width, height
                     c.transform,
                     gl,
@@ -56,6 +65,8 @@ impl CubicBezier { // Rendering
     }
 
     fn render_curve(&self, args: &RenderArgs, gl: &mut GlGraphics) {
+        const LINE_WIDTH: f64 = 1.0;
+        let line_color = self.palette.to_rgba(self.palette.secondary);
         // generate a list of points on the curve
         use graphics::*;
         const NUM_POINTS: usize = 100;
@@ -69,12 +80,14 @@ impl CubicBezier { // Rendering
             let p1 = segment[0];
             let p2 = segment[1];
             gl.draw(args.viewport(), |c, gl| {
-                line(Self::LINE_COLOR, Self::LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
+                line(line_color, LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
             });
         }
     }
 
     fn render_cage(&self, args: &RenderArgs, gl: &mut GlGraphics) {
+        const LINE_WIDTH: f64 = 0.5;
+        let line_color = self.palette.to_rgba(self.palette.tertiary);
         // render the control cage
         use graphics::*;
         //draw a line between every control point (cage)
@@ -82,7 +95,7 @@ impl CubicBezier { // Rendering
             let p1 = segment[0];
             let p2 = segment[1];
             gl.draw(args.viewport(), |c, gl| {
-                line(Self::LINE_COLOR, Self::LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
+                line(line_color, LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
             });
         }
     }

@@ -1,3 +1,6 @@
+mod cubic_bezier;
+mod color_palettes;
+
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
@@ -9,26 +12,29 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent};
 use piston::window::WindowSettings;
 
+use crate::color_palettes::{Palette, NORD, FLAT};
+use cubic_bezier::CubicBezier;
 
-mod bezier;
-mod bezierSpline;
-use bezier::CubicBezier;
-use bezierSpline::BezierSpline;
+
+// 
 use piston::{Button, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    my_curve: BezierSpline,
+    my_curve: CubicBezier,
+    palette: Palette
 }
 
 impl App {
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
+        let color = self.palette.to_rgba(self.palette.background);
         self.gl.draw(args.viewport(), |c: Context, gl| {
             // Clear the screen.
-            const DARK_GRAY: [f32; 4] = [0.3, 0.3, 0.3, 1.0];
-            clear(DARK_GRAY, gl);
+            clear(color, gl);
+        
         });
-        self.my_curve.render(args, &mut self.gl);
+        // Render the curve.
+        self.my_curve.render(args, &mut self.gl); 
     }
 }
 
@@ -47,7 +53,8 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         // bezier curve with 4 points.
-        my_curve: BezierSpline::new(),
+        my_curve: CubicBezier::new(),
+        palette: NORD,
     };
 
     let mut events = Events::new(EventSettings::new());
@@ -63,12 +70,12 @@ fn main() {
             app.my_curve.click(cursor[0], cursor[1]);
         }
 
-        if let Some(Button::Keyboard(key)) = e.press_args() {
-            match key {
-                piston::Key::Space => app.my_curve.add_curve(),
-                _ => {}
-            }
-        }
+        // if let Some(Button::Keyboard(key)) = e.press_args() {
+        //     match key {
+        //         piston::Key::Space => app.my_curve.add_curve(),
+        //         _ => {}
+        //     }
+        // }
 
         if let Some(Button::Mouse(MouseButton::Left)) = e.release_args() {
             app.my_curve.release();
