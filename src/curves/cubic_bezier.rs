@@ -2,6 +2,7 @@ use opengl_graphics::GlGraphics;
 use piston::input::RenderArgs;
 use crate::color_palettes::{Palette, FLAT, NORD};
 use super::DisplayParameters;
+
 pub struct CubicBezier {
     // collection of 4 control points
     pub control_points: [[f64; 2]; 4],
@@ -38,74 +39,26 @@ impl CubicBezier { // Initialization
         }
     }
 }
+pub struct DeCasteljauPoints {
+    // de Casteljaus method uses repeated linear interpolation to find a point on the curve.
+    // This struct stores the points used in the calculation, and can be used to render the intermediate steps.
+    // Level 0: The control points of the curve.
+    p0 : [f64; 2],
+    p1 : [f64; 2],
+    p2 : [f64; 2],
+    p3 : [f64; 2],
+    // Level 1: The points between the control points.
+    q0 : [f64; 2],
+    q1 : [f64; 2],
+    q2 : [f64; 2],
+    // Level 2: The points between the points from level 1.
+    r0 : [f64; 2],
+    r1 : [f64; 2],
+    // Level 3: The final point on the curve.
+    s0 : [f64; 2],
 
-
-impl CubicBezier { // Rendering
-    const BOX_SIZE: f64 = 5.0;
-
-    pub fn render(&self, args: &RenderArgs, gl: &mut GlGraphics) {
-        if self.display_parameters.draw_cage { self.render_cage(args, gl); }
-        if self.display_parameters.draw_curve { self.render_curve(args, gl); }
-        if self.display_parameters.draw_control_points { self.render_control_points(args, gl); }
-
-    }
-
-    fn render_control_points(&self, args: &RenderArgs, gl: &mut GlGraphics) {
-        // draw the control points as boxes
-        use graphics::*;
-        for pos in &self.control_points {
-            let rect = [
-                pos[0] - Self::BOX_SIZE / 2.0,
-                pos[1] - Self::BOX_SIZE / 2.0,
-                Self::BOX_SIZE, Self::BOX_SIZE
-            ];
-            gl.draw(args.viewport(), |c, gl| {
-                rectangle(
-                    self.palette.to_rgba(self.palette.primary),
-                    rect, // x, y, width, height
-                    c.transform,
-                    gl,
-                );
-            });
-        }
-    }
-
-    fn render_curve(&self, args: &RenderArgs, gl: &mut GlGraphics) {
-        const LINE_WIDTH: f64 = 1.0;
-        let line_color = self.palette.to_rgba(self.palette.secondary);
-        // generate a list of points on the curve
-        use graphics::*;
-        const NUM_POINTS: usize = 100;
-        let mut points = [[0.0; 2]; NUM_POINTS];
-        for i in 0..NUM_POINTS {
-            let t = i as f64 / (NUM_POINTS - 1) as f64;
-            points[i] = self.de_casteljaus(t);
-        }
-        // draw the curve
-        for segment in points.windows(2) {
-            let p1 = segment[0];
-            let p2 = segment[1];
-            gl.draw(args.viewport(), |c, gl| {
-                line(line_color, LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
-            });
-        }
-    }
-
-    fn render_cage(&self, args: &RenderArgs, gl: &mut GlGraphics) {
-        const LINE_WIDTH: f64 = 0.5;
-        let line_color = self.palette.to_rgba(self.palette.tertiary);
-        // render the control cage
-        use graphics::*;
-        //draw a line between every control point (cage)
-        for segment in self.control_points.windows(2) {
-            let p1 = segment[0];
-            let p2 = segment[1];
-            gl.draw(args.viewport(), |c, gl| {
-                line(line_color, LINE_WIDTH, [p1[0], p1[1], p2[0], p2[1]], c.transform, gl);
-            });
-        }
-    }
 }
+
 
 impl CubicBezier { // Interaction
     pub fn click(&mut self, x: f64, y: f64) {
@@ -161,8 +114,7 @@ impl CubicBezier {
             ( t3                           ) * p3[1],
         ]
     }
-
-    pub fn de_casteljaus(&self, t: f64) -> [f64; 2] {
+    pub fn de_casteljaus(&self, t: f64) -> deCasteljauPoints {
         let p0: [f64; 2] = self.control_points[0];
         let p1 = self.control_points[1];
         let p2 = self.control_points[2];
@@ -190,10 +142,16 @@ impl CubicBezier {
             q1[1] + t * (q2[1] - q1[1]),
         ];
         
-        [
+        let s0 = [
             r0[0] + t * (r1[0] - r0[0]),
-            r0[1] + t * (r1[1] - r0[1]),
-            ]
+            r0[1] + t * (r1[1] - r0[1])
+        ];
+        deCasteljauPoints {
+            p0, p1, p2, p3,
+            q0, q1, q2,
+            r0, r1,
+            s0,
+        }
         // Could put this all in to a struct.. so we can render each subdivision level.
         // Level 0 = [p0, p1, p2, p3]
         // Level 1 = [q0, q1, q2]
