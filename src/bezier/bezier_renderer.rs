@@ -1,8 +1,8 @@
 extern crate opengl_graphics;
 use crate::bezier::BezierCurve;
-use crate::color_palettes::{Palette, NORD, FLAT};
-use opengl_graphics::{GlGraphics, OpenGL};
-use piston::input::{RenderArgs, RenderEvent};
+use crate::color_palettes::Palette;
+use opengl_graphics::{GlGraphics,};
+use piston::input::{RenderArgs};
 
 pub struct BezierRenderer {
     pub time: f64,
@@ -13,7 +13,6 @@ pub struct DisplayParameters {
     pub draw_cage : bool,
     pub draw_curve : bool,
     pub draw_control_points : bool,
-    pub draw_tangents : bool,
     pub box_size : f64,
     palette: Palette,
 }
@@ -28,9 +27,8 @@ impl BezierRenderer {
                 draw_cage: true,
                 draw_curve: true,
                 draw_control_points: true,
-                draw_tangents: false,
                 box_size: 5.0,
-                palette: NORD,
+                palette: Palette::default(),
             },
         }
     }
@@ -42,9 +40,12 @@ impl BezierRenderer {
 
 
     pub fn render(&self, curves: &Vec<BezierCurve>, args: &RenderArgs, gl: &mut GlGraphics) {
+        if curves.len() == 0 {
+            return;
+        }
         for curve in curves {
-            self.render_cage(curve, args, gl); // draws the control points and lines between them
-            self.render_curve(curve, args, gl); // draws a circle on the curve at the current time
+            self.render_cage(curve, args, gl); // draws the control points and lines between them. uses de Casteljau's algorithm.
+            self.render_curve(curve, args, gl); // draws the curve itself, uses basis function form.
         }
     }
 
@@ -54,18 +55,15 @@ impl BezierRenderer {
     // - Lines between the de Casteljau points.
     // - The curve itself.
 
-    fn get_color (&self, subdivision: usize, max_subdivision: usize) -> [f32; 4] {
+    fn get_color(&self, subdivision: usize, max_subdivision: usize) -> [f32; 4] {
         // returns white if the subdivision is at level 0 or max, else it cycles between three colors.
-        let colors = [
-            self.params.palette.primary.to_rgba(),
-            self.params.palette.accent.to_rgba(),
-            self.params.palette.tertiary.to_rgba(),
-        ];
-        if (subdivision == 0 || subdivision == max_subdivision) {
-            return [1.0, 1.0, 1.0, 1.0]; // WHITE
+        let colors = &self.params.palette.curve_colors;
+        let white = self.params.palette.white.to_rgba();
+        if subdivision == 0 || subdivision == max_subdivision {
+            return white;
         }
         else {
-            return colors[subdivision % colors.len()];
+            return colors[subdivision % colors.len()].to_rgba();
         }
 
 
@@ -126,12 +124,18 @@ impl BezierRenderer {
     fn draw_points(&self, points: &[[f64; 2]], color: [f32; 4],  args: &RenderArgs, gl: &mut GlGraphics) {
         // draws a circle at each point
         use graphics::*;
-        const POINT_RADIUS: f64 = 2.0;
+        let radius : f64;
+
+        if points.len() == 1 {
+            radius = 4.0; // little hack to make the final point bigger
+        }
+        else {radius = 2.0;}
+
         for pos in points {
             gl.draw(args.viewport(), |c, gl| {
                 ellipse(
                     color,
-                    [pos[0] - POINT_RADIUS, pos[1] - POINT_RADIUS, POINT_RADIUS * 2.0, POINT_RADIUS * 2.0],
+                    [pos[0] - radius, pos[1] - radius, radius * 2.0, radius * 2.0],
                     c.transform,
                     gl,
                 );

@@ -1,35 +1,40 @@
 pub struct Palette {
     pub background: Color,
+    pub background_accent: Color,
+    pub white: Color,
+    pub curve_colors: Vec<Color>,
     pub primary: Color,
     pub secondary: Color,
-    pub tertiary: Color,
     pub accent: Color,
-    pub background_accent: Color,
 
 }
-
-pub const FLAT: Palette = Palette {
-    background: Color { value: "#2c3e50" },
-    primary: Color { value: "#c0392b" },
-    secondary: Color { value: "#2980b9" },
-    tertiary: Color { value: "#27ae60" },
-    accent: Color { value: "#8e44ad" },
-    background_accent: Color { value: "#3d4f60" },
-};
-
-pub const NORD: Palette = Palette {
-    background: Color { value: "#2e3440" },
-    primary: Color { value: "#88c0d0" },
-    secondary: Color { value: "#81a1c1" },
-    tertiary: Color { value: "#5e81ac" },
-    accent: Color { value: "#bf616a" },
-    background_accent: Color { value: "#4c566a" },
-};
 pub struct Color {
     pub value: &'static str,
 }
+impl Palette {
+    pub fn nord() -> Palette { Palette {
+        background: Color { value: "#3b4252" },
+        background_accent: Color { value: "#4c566a" },
+        white: Color { value: "#e5e9f0" },
+        primary: Color { value: "#5e81ac" },
+        secondary: Color { value: "#81a1c1" },
+        accent: Color { value: "#d08770" },
+        curve_colors: vec![
+            Color { value: "#bf616a" },
+            Color { value: "#a3be8c" },
+            Color { value: "#ebcb8b" },
+            Color { value: "#88c0d0" },
+            ],
+        }
+    }
+    
+    pub fn default() -> Palette {
+        Self::nord()
+    }
+}
 
 impl Color {
+
     pub fn to_rgba(&self) -> [f32; 4] {
         let hex = self.value.trim_start_matches("#");
         let r = u8::from_str_radix(&hex[0..2], 16).unwrap();

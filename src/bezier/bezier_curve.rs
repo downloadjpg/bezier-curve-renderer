@@ -1,9 +1,6 @@
 extern crate num;
 use crate::bezier::bezier_curve::num::integer::binomial; // huh?
 
-
-
-
 pub struct BezierCurve {
     // collection of 4 control points
     pub control_points: Vec<[f64; 2]>,
@@ -21,13 +18,6 @@ impl BezierCurve { // Initialization
         BezierCurve {
             control_points: p,
             selected_point: None,
-        }
-    }
-
-    pub fn with_control_points(control_points: Vec<[f64; 2]>) -> Self {
-        Self {
-            control_points,
-            ..Self::new()
         }
     }
 }
@@ -70,12 +60,30 @@ impl BezierCurve { // Interaction
             self.control_points[i] = [nx,ny];
         }
     }
+
+    pub fn right_click(&mut self, x: f64, y: f64) -> bool {
+        // check if the right click is on a control point
+        for (i, pos) in self.control_points.iter().enumerate() {
+            let rect = [
+                pos[0] - Self::GRID_SIZE / 2.0,
+                pos[1] - Self::GRID_SIZE / 2.0,
+                Self::GRID_SIZE, Self::GRID_SIZE
+            ];
+            if x >= rect[0] && x <= rect[0] + rect[2] 
+            && y >= rect[1] && y <= rect[1] + rect[3] {
+                self.control_points.remove(i);
+                if self.selected_point == Some(i) {
+                    self.selected_point = None;
+                }
+                return true
+            }
+        }
+        false
+    }
 }
 
-// CubicBezier functions
+// Bezier functions
 impl BezierCurve {
-    // Assume the curve is a cubic CubicBezier curve for now.
-
     // Return a point on the curve at time t
     // Blending function format.
     // https://en.wikipedia.org/wiki/B%C3%A9zier_curve#Explicit_definition
@@ -96,7 +104,7 @@ impl BezierCurve {
     }
     
     pub fn de_casteljaus(&self, t: f64, i: usize)  -> Vec<[f64; 2]> {
-       // returns the points used in the de Casteljau algorithm at time t, and subdivision i.
+       // returns the points used in the de Casteljau algorithm at time t and subdivision i.
        // i = 0 returns the control points.
        // i = 1 returns interpolation between the control points, etc.\
        // i = n-1 returns the final point on the curve.
@@ -119,9 +127,5 @@ impl BezierCurve {
         points
     }
 
-    pub fn final_point(&self, t: f64) -> [f64; 2] {
-        // returns the final point on the curve at time t
-        self.de_casteljaus(t, self.control_points.len() - 1)[0]
-    }
 
 }

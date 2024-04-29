@@ -12,11 +12,11 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent};
 use piston::window::WindowSettings;
 
-use crate::color_palettes::{Palette, NORD, FLAT};
+use crate::color_palettes::Palette;
 use bezier::{BezierCurve, BezierRenderer};
 
 // 
-use piston::{Button, ButtonArgs, ButtonEvent, ButtonState, Key, Motion, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
+use piston::{Button, ButtonArgs, ButtonEvent, ButtonState, Key, MouseButton, MouseCursorEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     curves: Vec<BezierCurve>,
@@ -31,7 +31,7 @@ impl App {
         use graphics::*;
         // Clear the screen.
         let color = self.palette.background.to_rgba();
-        self.gl.draw(args.viewport(), |c: Context, gl| {
+        self.gl.draw(args.viewport(), |_c: Context, gl| {
             clear(color, gl);
         
         });
@@ -54,7 +54,7 @@ impl App {
                 y += grid_size;
             }
         });
-        // Render the curve.
+        // Render the curves!.
         self.renderer.render(&self.curves, args, &mut self.gl); 
 
     }
@@ -65,9 +65,10 @@ fn main() {
     let opengl = OpenGL::V3_2;
 
     // Create a Glutin window.
-    let mut window: Window = WindowSettings::new("bezier-demo", [400, 400])
+    let mut window: Window = WindowSettings::new("bezier-demo", [500, 500])
         .graphics_api(opengl)
         .exit_on_esc(true)
+        .resizable(false)
         .build()
         .unwrap();
 
@@ -76,7 +77,7 @@ fn main() {
         gl: GlGraphics::new(opengl),
         // bezier curve with 4 points.
         curves: vec![BezierCurve::new()],
-        palette: NORD,
+        palette: Palette::default(),
         renderer: BezierRenderer::new(),
         selected_curve: None,
         button_states: [ButtonState::Release, ButtonState::Release],
@@ -145,13 +146,22 @@ fn main() {
             let success = curve.click(cursor[0], cursor[1]);
             if success {
                 app.selected_curve = Some(i);
-                print!("hii");
                 break;
             }
         }
     }
     
     fn handle_right_mouse_button_press(app: &mut App, cursor: [f64; 2]) {
+        for curve in &mut app.curves {
+            let remove_point_success = curve.right_click(cursor[0], cursor[1]);
+            if remove_point_success {
+                if curve.control_points.is_empty() {
+                    app.curves.retain(|c| c.control_points.len() > 0);
+                    app.selected_curve = None;
+                }
+                return;
+            }
+        }
         if let Some(selected_curve_index) = app.selected_curve {
             let selected = &mut app.curves[selected_curve_index];
             selected.add_point(cursor[0], cursor[1]);
