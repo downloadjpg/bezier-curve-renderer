@@ -72,7 +72,7 @@ impl BezierRenderer {
         let mut points = [[0.0; 2]; NUM_POINTS];
         for i in 0..NUM_POINTS {
             let t = i as f64 / (NUM_POINTS - 1) as f64;
-            points[i] = curve.final_point(t);
+            points[i] = curve.point(t);
         }
 
         // draw the curve

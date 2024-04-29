@@ -1,3 +1,9 @@
+extern crate num;
+use crate::bezier::bezier_curve::num::integer::binomial; // huh?
+
+
+
+
 pub struct BezierCurve {
     // collection of 4 control points
     pub control_points: Vec<[f64; 2]>,
@@ -72,26 +78,21 @@ impl BezierCurve {
 
     // Return a point on the curve at time t
     // Blending function format.
+    // https://en.wikipedia.org/wiki/B%C3%A9zier_curve#Explicit_definition
+
     pub fn point(&self, t: f64) -> [f64; 2] {
-        let t3 = t.powf(3.0);
-        let t2 = t.powf(2.0);
-    
-        let p0 = self.control_points[0];
-        let p1 = self.control_points[1];
-        let p2 = self.control_points[2];
-        let p3 = self.control_points[3];
-    
-        [
-            ( -t3 + 3.0*t2 - 3.0*t + 1.0 ) * p0[0] +
-            ( 3.0*t3 - 6.0*t2 + 3.0*t     ) * p1[0] +
-            ( -3.0*t3 + 3.0*t2            ) * p2[0] +
-            ( t3                           ) * p3[0],
-    
-            ( -t3 + 3.0*t2 - 3.0*t + 1.0 ) * p0[1] +
-            ( 3.0*t3 - 6.0*t2 + 3.0*t     ) * p1[1] +
-            ( -3.0*t3 + 3.0*t2            ) * p2[1] +
-            ( t3                           ) * p3[1],
-        ]
+        let n = self.control_points.len() - 1;
+        let mut x = 0.0;
+        let mut y = 0.0;
+        for (i, &p) in self.control_points.iter().enumerate() {
+        // B(t) = sum from i=0 to n of (n choose i) * (1-t)^(n-i) * t^i * P_i
+            let b = binomial(n, i) as f64
+                * (1.0 - t).powf((n - i) as f64)
+                * t.powf(i as f64);
+            x += b * p[0];
+            y += b * p[1];
+        }
+        [x, y]
     }
     
     pub fn de_casteljaus(&self, t: f64, i: usize)  -> Vec<[f64; 2]> {
