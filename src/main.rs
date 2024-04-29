@@ -16,27 +16,25 @@ use crate::color_palettes::{Palette, NORD, FLAT};
 use bezier::{BezierCurve, BezierRenderer};
 
 // 
-use piston::{keyboard, Button, ButtonEvent, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
+use piston::{Button, ButtonArgs, ButtonEvent, ButtonState, Key, Motion, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     curves: Vec<BezierCurve>,
     selected_curve: Option<usize>,
     renderer: BezierRenderer,
-    palette: Palette
+    palette: Palette,
+    button_states: [ButtonState; 2], // state of left and right arrow keys, used to scrub along time.
 }
 
 impl App {
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
+        // Clear the screen.
         let color = self.palette.background.to_rgba();
         self.gl.draw(args.viewport(), |c: Context, gl| {
-            // Clear the screen.
             clear(color, gl);
         
         });
-        // Render the curve.
-        self.renderer.render(&self.curves, args, &mut self.gl); 
-
         //Draw grid lines
         let grid_size = 10.0;
         let thickness = 0.25;
@@ -56,6 +54,9 @@ impl App {
                 y += grid_size;
             }
         });
+        // Render the curve.
+        self.renderer.render(&self.curves, args, &mut self.gl); 
+
     }
 }
 
@@ -64,7 +65,7 @@ fn main() {
     let opengl = OpenGL::V3_2;
 
     // Create a Glutin window.
-    let mut window: Window = WindowSettings::new("spinning-square", [200, 200])
+    let mut window: Window = WindowSettings::new("bezier-demo", [400, 400])
         .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
@@ -78,56 +79,101 @@ fn main() {
         palette: NORD,
         renderer: BezierRenderer::new(),
         selected_curve: None,
+        button_states: [ButtonState::Release, ButtonState::Release],
+        
     };
 
     let mut events = Events::new(EventSettings::new());
     let mut cursor = [0.0, 0.0];
+
+    // Main event loop
     while let Some(e) = events.next(&mut window) {
-        if let Some(args) = e.render_args() {
-            app.render(&args);
+        if let Some(args) = e.render_args() { app.render(&args); }
+    
+        if let Some(ButtonArgs { button, state, .. }) = e.button_args() {
+            handle_button_input(&mut app, button, state, cursor);
         }
-
-        // Handle mouse input
-        // if the left mouse button is pressed, call self.my_curve.click(x,y) with the mouse's current position
-        if let Some(Button::Mouse(MouseButton::Left)) = e.press_args() {
-            for (i, curve) in app.curves.iter_mut().enumerate() {
-                let success = curve.click(cursor[0], cursor[1]);
-                if success {
-                    app.selected_curve = Some(i);
-                    break;
-                }
-            }
-        }
-
-        if let Some(Button::Mouse(MouseButton::Right)) = e.press_args() {
+        
+        if let Some([x, y]) = e.mouse_cursor_args() {
+            cursor = [x, y];
             if let Some(selected_curve_index) = app.selected_curve {
                 let selected = &mut app.curves[selected_curve_index];
-                selected.add_point(cursor[0], cursor[1]);
+                selected.drag(x, y);
             }
         }
 
-        if let Some(Button::Keyboard(key)) = e.press_args() {
-            match key {
-                piston::Key::Space => app.curves.push(BezierCurve::new()),
-                piston::Key::Right => app.renderer.update_time(0.01),
-                piston::Key::Left => app.renderer.update_time(-0.01),
-                _ => {}
+        match app.button_states {
+            [ButtonState::Press, ButtonState::Release] => {
+                // scrub backward
+                app.renderer.update_time(-0.0005);
             }
-        }
-
-        if let Some(Button::Mouse(MouseButton::Left)) = e.release_args() {
-            for curve in app.curves.iter_mut() {
-                curve.release();
+            [ButtonState::Release, ButtonState::Press] => {
+                // scrub forward
+                app.renderer.update_time(0.0005);
             }
+            _ => {}
         }
-
-        if let Some(args) = e.mouse_cursor_args() {
-            cursor = args;
-            for curve in app.curves.iter_mut() {
-                curve.drag(args[0], args[1]);
-            }
-        }
-
-
     }
+    
+    fn handle_button_input(app: &mut App, button: Button, state: ButtonState, cursor: [f64; 2]) {
+        match button {
+            Button::Mouse(MouseButton::Left) => {
+                if state == ButtonState::Press {
+                    handle_left_mouse_button_press(app, cursor);
+                }
+
+                else if state == ButtonState::Release {
+                    for curve in &mut app.curves {
+                        curve.release();
+                    }
+                }
+            }
+            Button::Mouse(MouseButton::Right) => {
+                if state == ButtonState::Press {
+                    handle_right_mouse_button_press(app, cursor);
+                }
+            }
+            Button::Keyboard(key) => {
+                handle_keyboard_input(app, key, state);
+            }
+            _ => {}
+        }
+    }
+    
+    fn handle_left_mouse_button_press(app: &mut App, cursor: [f64; 2]) {
+        for (i, curve) in app.curves.iter_mut().enumerate() {
+            let success = curve.click(cursor[0], cursor[1]);
+            if success {
+                app.selected_curve = Some(i);
+                print!("hii");
+                break;
+            }
+        }
+    }
+    
+    fn handle_right_mouse_button_press(app: &mut App, cursor: [f64; 2]) {
+        if let Some(selected_curve_index) = app.selected_curve {
+            let selected = &mut app.curves[selected_curve_index];
+            selected.add_point(cursor[0], cursor[1]);
+        }
+    }
+    
+    fn handle_keyboard_input(app: &mut App, key: Key, state: ButtonState) {
+        match key {
+            piston::Key::Space => {
+                if state == ButtonState::Press {
+                    app.curves.push(BezierCurve::new())
+                }
+            }
+            piston::Key::Right => {
+                app.button_states[0] = state;
+            }
+            piston::Key::Left => {
+                app.button_states[1] = state;
+            }
+            _ => {}
+        }
+    }
+
+
 }

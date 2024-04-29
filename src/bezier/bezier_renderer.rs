@@ -20,15 +20,6 @@ pub struct DisplayParameters {
 
 
 impl BezierRenderer {
-    
-    fn colors(&self) -> Vec<[f32; 4]> {
-        vec![
-            self.params.palette.primary.to_rgba(),
-            self.params.palette.secondary.to_rgba(),
-            self.params.palette.tertiary.to_rgba(),
-            self.params.palette.background_accent.to_rgba(),
-        ]
-    }
 
     pub fn new() -> BezierRenderer {
         BezierRenderer {
@@ -45,7 +36,8 @@ impl BezierRenderer {
     }
 
     pub fn update_time(&mut self, delta: f64) {
-        self.time += delta;
+        self.time = (self.time + delta)
+        .clamp(0.0, 1.0);
     }
 
 
@@ -62,18 +54,31 @@ impl BezierRenderer {
     // - Lines between the de Casteljau points.
     // - The curve itself.
 
+    fn get_color (&self, subdivision: usize, max_subdivision: usize) -> [f32; 4] {
+        // returns white if the subdivision is at level 0 or max, else it cycles between three colors.
+        let colors = [
+            self.params.palette.primary.to_rgba(),
+            self.params.palette.accent.to_rgba(),
+            self.params.palette.tertiary.to_rgba(),
+        ];
+        if (subdivision == 0 || subdivision == max_subdivision) {
+            return [1.0, 1.0, 1.0, 1.0]; // WHITE
+        }
+        else {
+            return colors[subdivision % colors.len()];
+        }
+
+
+    }
     fn render_cage(&self, curve: &BezierCurve, args: &RenderArgs, gl: &mut GlGraphics) {
         for subdivision in 0..curve.control_points.len() {
             let points = curve.de_casteljaus(self.time, subdivision);
-            let color = self.colors()[subdivision];
+            let color = self.get_color(subdivision, curve.control_points.len() - 1);
             // special case for control points, draw boxes instead of circles.
             if subdivision == 0 {
                  self.draw_control_points(&points, args, gl);
                  self.draw_lines(&points, color, args, gl);
-                 continue;}
-            if subdivision == curve.control_points.len() - 1 {
-                self.draw_control_points(&points, color, args, gl);
-                continue;
+                 continue;
             }
             // set color, thickness, based on subdivision level
             self.draw_lines(&points,color, args, gl);
@@ -84,7 +89,7 @@ impl BezierRenderer {
     fn render_curve(&self, curve: &BezierCurve, args: &RenderArgs, gl: &mut GlGraphics) {
         use graphics::*;
         const LINE_WIDTH: f64 = 1.0;
-        let line_color = self.params.palette.secondary.to_rgba();
+        let line_color = [1.0, 1.0, 1.0, 1.0];
 
         // generate a list of points on the curve
         const NUM_POINTS: usize = 100;
