@@ -1,4 +1,4 @@
-mod curves;
+mod bezier;
 mod color_palettes;
 
 extern crate glutin_window;
@@ -13,28 +13,49 @@ use piston::input::{RenderArgs, RenderEvent};
 use piston::window::WindowSettings;
 
 use crate::color_palettes::{Palette, NORD, FLAT};
-use curves::Spline;
-
+use bezier::{BezierCurve, BezierRenderer};
 
 // 
 use piston::{Button, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    my_curve: Spline,
+    curves: Vec<BezierCurve>,
+    selected_curve: Option<usize>,
+    renderer: BezierRenderer,
     palette: Palette
 }
 
 impl App {
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
-        let color = self.palette.to_rgba(self.palette.background);
+        let color = self.palette.background.to_rgba();
         self.gl.draw(args.viewport(), |c: Context, gl| {
             // Clear the screen.
             clear(color, gl);
         
         });
         // Render the curve.
-        self.my_curve.render(args, &mut self.gl); 
+        self.renderer.render(&self.curves, args, &mut self.gl); 
+
+        //Draw grid lines
+        let grid_size = 10.0;
+        let thickness = 0.25;
+        let color = self.palette.background_accent.to_rgba();
+
+        self.gl.draw(args.viewport(), |c, gl| {
+            let mut x = 0.0;
+            let height = args.window_size[0] as f64;
+            let width = args.window_size[1] as f64;
+            while x < width {
+                line(color, thickness, [x, 0.0, x, height as f64], c.transform, gl);
+                x += grid_size;
+            }
+            let mut y = 0.0;
+            while y < height {
+                line(color, thickness, [0.0, y, width as f64, y], c.transform, gl);
+                y += grid_size;
+            }
+        });
     }
 }
 
@@ -53,8 +74,10 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         // bezier curve with 4 points.
-        my_curve: Spline::new_default(),
+        curves: vec![BezierCurve::new()],
         palette: NORD,
+        renderer: BezierRenderer::new(),
+        selected_curve: None,
     };
 
     let mut events = Events::new(EventSettings::new());
@@ -67,23 +90,29 @@ fn main() {
         // Handle mouse input
         // if the left mouse button is pressed, call self.my_curve.click(x,y) with the mouse's current position
         if let Some(Button::Mouse(MouseButton::Left)) = e.press_args() {
-            app.my_curve.click(cursor[0], cursor[1]);
+            for curve in app.curves.iter_mut() {
+                curve.click(cursor[0], cursor[1]); // TODO: implement callback for selecting a curve
+            }
         }
 
-        // if let Some(Button::Keyboard(key)) = e.press_args() {
-        //     match key {
-        //         piston::Key::Space => app.my_curve.add_curve(),
-        //         _ => {}
-        //     }
-        // }
+        if let Some(Button::Keyboard(key)) = e.press_args() {
+            match key {
+                piston::Key::Space => app.curves.push(BezierCurve::new()),
+                _ => {}
+            }
+        }
 
         if let Some(Button::Mouse(MouseButton::Left)) = e.release_args() {
-            app.my_curve.release();
+            for curve in app.curves.iter_mut() {
+                curve.release();
+            }
         }
 
         if let Some(args) = e.mouse_cursor_args() {
             cursor = args;
-            app.my_curve.drag(args[0], args[1]);
+            for curve in app.curves.iter_mut() {
+                curve.drag(args[0], args[1]);
+            }
         }
     }
 }

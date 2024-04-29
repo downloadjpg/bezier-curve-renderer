@@ -3,6 +3,9 @@ pub struct Palette {
     pub primary: Color,
     pub secondary: Color,
     pub tertiary: Color,
+    pub accent: Color,
+    pub background_accent: Color,
+
 }
 
 pub const FLAT: Palette = Palette {
@@ -10,6 +13,8 @@ pub const FLAT: Palette = Palette {
     primary: Color { value: "#c0392b" },
     secondary: Color { value: "#2980b9" },
     tertiary: Color { value: "#27ae60" },
+    accent: Color { value: "#8e44ad" },
+    background_accent: Color { value: "#3d4f60" },
 };
 
 pub const NORD: Palette = Palette {
@@ -17,6 +22,8 @@ pub const NORD: Palette = Palette {
     primary: Color { value: "#88c0d0" },
     secondary: Color { value: "#81a1c1" },
     tertiary: Color { value: "#5e81ac" },
+    accent: Color { value: "#bf616a" },
+    background_accent: Color { value: "#4c566a" },
 };
 pub struct Color {
     pub value: &'static str,
