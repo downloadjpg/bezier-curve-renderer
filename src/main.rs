@@ -95,6 +95,13 @@ fn main() {
             }
         }
 
+        if let Some(Button::Mouse(MouseButton::Right)) = e.press_args() {
+            if let Some(selected_curve_index) = app.selected_curve {
+                let selected = &mut app.curves[selected_curve_index];
+                selected.add_point(cursor[0], cursor[1]);
+            }
+        }
+
         if let Some(Button::Keyboard(key)) = e.press_args() {
             match key {
                 piston::Key::Space => app.curves.push(BezierCurve::new()),

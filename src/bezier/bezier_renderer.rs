@@ -45,7 +45,7 @@ impl BezierRenderer {
         // draw the control points as boxes 
         let box_size = self.params.box_size;
         use graphics::*;
-        for pos in curve.control_points {
+        for pos in &curve.control_points {
             let rect = [
                 pos[0] - box_size / 2.0,
                 pos[1] - box_size / 2.0,
@@ -72,7 +72,7 @@ impl BezierRenderer {
         let mut points = [[0.0; 2]; NUM_POINTS];
         for i in 0..NUM_POINTS {
             let t = i as f64 / (NUM_POINTS - 1) as f64;
-            points[i] = curve.point(t);
+            points[i] = curve.final_point(t);
         }
 
         // draw the curve

@@ -1,15 +1,12 @@
-use crate::color_palettes::{Palette, FLAT, NORD};
-use piston::input::{RenderArgs, RenderEvent};
-
 pub struct BezierCurve {
     // collection of 4 control points
-    pub control_points: [[f64; 2]; 4],
+    pub control_points: Vec<[f64; 2]>,
     pub selected_point: Option<usize>, // index of a control point actively clicked on, used for dragging
 }
 impl BezierCurve { // Initialization
     pub fn new() -> BezierCurve {
         // return a new CubicBezier curve with 4 control points near the center of the screen
-        let p = [
+        let p = vec![
             [50.0, 50.0],
             [100.0, 100.0],
             [150.0, 100.0],
@@ -21,37 +18,24 @@ impl BezierCurve { // Initialization
         }
     }
 
-    pub fn with_control_points(control_points: [[f64; 2]; 4]) -> Self {
+    pub fn with_control_points(control_points: Vec<[f64; 2]>) -> Self {
         Self {
             control_points,
             ..Self::new()
         }
     }
 }
-pub struct DeCasteljauPoints {
-    // de Casteljaus method uses repeated linear interpolation to find a point on the curve.
-    // This struct stores the points used in the calculation, and can be used to render the intermediate steps.
-    // Level 0: The control points of the curve.
-    p0 : [f64; 2],
-    p1 : [f64; 2],
-    p2 : [f64; 2],
-    p3 : [f64; 2],
-    // Level 1: The points between the control points.
-    q0 : [f64; 2],
-    q1 : [f64; 2],
-    q2 : [f64; 2],
-    // Level 2: The points between the points from level 1.
-    r0 : [f64; 2],
-    r1 : [f64; 2],
-    // Level 3: The final point on the curve.
-    s0 : [f64; 2],
-
-}
 
 
 impl BezierCurve { // Interaction
+
     const GRID_SIZE: f64 = 10.0;
 
+    pub fn add_point(&mut self, x: f64, y: f64) {
+        // add a new control point at the specified location
+        self.control_points.push([x, y]);
+    }
+    
     pub fn click(&mut self, x: f64, y: f64) {
         // check if the click is on a control point
         for (i, pos) in self.control_points.iter().enumerate() {
@@ -107,49 +91,34 @@ impl BezierCurve {
             ( t3                           ) * p3[1],
         ]
     }
-    pub fn de_casteljaus(&self, t: f64) -> DeCasteljauPoints {
-        let p0: [f64; 2] = self.control_points[0];
-        let p1 = self.control_points[1];
-        let p2 = self.control_points[2];
-        let p3 = self.control_points[3];
+    
+    pub fn de_casteljaus(&self, t: f64, i: usize)  -> Vec<[f64; 2]> {
+       // returns the points used in the de Casteljau algorithm at time t, and subdivision i.
+       // i = 0 returns the control points.
+       // i = 1 returns interpolation between the control points, etc.\
+       // i = n-1 returns the final point on the curve.
+       
+       // base case: i = 0
+       if i == 0 {
+            return self.control_points.clone();
+       }
 
-        let q0 = [
-            p0[0] + t * (p1[0] - p0[0]),
-            p0[1] + t * (p1[1] - p0[1]),
-        ];
-        let q1 = [
-            p1[0] + t * (p2[0] - p1[0]),
-            p1[1] + t * (p2[1] - p1[1]),
-        ];
-        let q2 = [
-            p2[0] + t * (p3[0] - p2[0]),
-            p2[1] + t * (p3[1] - p2[1]),
-        ];
-        
-        let r0 = [
-            q0[0] + t * (q1[0] - q0[0]),
-            q0[1] + t * (q1[1] - q0[1]),
-        ];
-        let r1 = [
-            q1[0] + t * (q2[0] - q1[0]),
-            q1[1] + t * (q2[1] - q1[1]),
-        ];
-        
-        let s0 = [
-            r0[0] + t * (r1[0] - r0[0]),
-            r0[1] + t * (r1[1] - r0[1])
-        ];
-        DeCasteljauPoints {
-            p0, p1, p2, p3,
-            q0, q1, q2,
-            r0, r1,
-            s0,
-        }
-        // Could put this all in to a struct.. so we can render each subdivision level.
-        // Level 0 = [p0, p1, p2, p3]
-        // Level 1 = [q0, q1, q2]
-        // Level 2 = [r0, r1]
-        // Level 3 = [s0]
+       // recursive case: i > 0
+       let mut points = vec![];
+       for segment in self.de_casteljaus(t, i-1).windows(2) {
+           let p1 = segment[0];
+           let p2 = segment[1];
+            points.push([
+                (1.0 - t) * p1[0] + t * p2[0],
+                (1.0 - t) * p1[1] + t * p2[1],
+            ]);
+        }       
+        points
+    }
+
+    pub fn final_point(&self, t: f64) -> [f64; 2] {
+        // returns the final point on the curve at time t
+        self.de_casteljaus(t, self.control_points.len() - 1)[0]
     }
 
 }
