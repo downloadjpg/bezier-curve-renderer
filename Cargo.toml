@@ -1,13 +1,13 @@
 [package]
 
-name = "spinning-square"
+name = "bezier-curves"
 version = "0.1.0"
 authors = [
     "Brody Foster"
 ]
 
 [[bin]]
-name = "spinning-square"
+name = "bezier-curves"
 
 [dependencies]
 piston = "0.55.0"

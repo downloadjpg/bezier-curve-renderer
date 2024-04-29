@@ -16,7 +16,7 @@ use crate::color_palettes::{Palette, NORD, FLAT};
 use bezier::{BezierCurve, BezierRenderer};
 
 // 
-use piston::{Button, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
+use piston::{keyboard, Button, ButtonEvent, MouseButton, MouseCursorEvent, PressEvent, ReleaseEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     curves: Vec<BezierCurve>,
@@ -109,6 +109,8 @@ fn main() {
         if let Some(Button::Keyboard(key)) = e.press_args() {
             match key {
                 piston::Key::Space => app.curves.push(BezierCurve::new()),
+                piston::Key::Right => app.renderer.update_time(0.01),
+                piston::Key::Left => app.renderer.update_time(-0.01),
                 _ => {}
             }
         }
@@ -125,5 +127,7 @@ fn main() {
                 curve.drag(args[0], args[1]);
             }
         }
+
+
     }
 }
