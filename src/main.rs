@@ -90,8 +90,12 @@ fn main() {
         // Handle mouse input
         // if the left mouse button is pressed, call self.my_curve.click(x,y) with the mouse's current position
         if let Some(Button::Mouse(MouseButton::Left)) = e.press_args() {
-            for curve in app.curves.iter_mut() {
-                curve.click(cursor[0], cursor[1]); // TODO: implement callback for selecting a curve
+            for (i, curve) in app.curves.iter_mut().enumerate() {
+                let success = curve.click(cursor[0], cursor[1]);
+                if success {
+                    app.selected_curve = Some(i);
+                    break;
+                }
             }
         }
 

@@ -36,7 +36,7 @@ impl BezierCurve { // Interaction
         self.control_points.push([x, y]);
     }
     
-    pub fn click(&mut self, x: f64, y: f64) {
+    pub fn click(&mut self, x: f64, y: f64) -> bool {
         // check if the click is on a control point
         for (i, pos) in self.control_points.iter().enumerate() {
             let rect = [
@@ -44,11 +44,13 @@ impl BezierCurve { // Interaction
                 pos[1] - Self::GRID_SIZE / 2.0,
                 Self::GRID_SIZE, Self::GRID_SIZE
             ];
-            if x >= rect[0] && x <= rect[0] + rect[2] && y >= rect[1] && y <= rect[1] + rect[3] {
+            if x >= rect[0] && x <= rect[0] + rect[2] 
+            && y >= rect[1] && y <= rect[1] + rect[3] {
                 self.selected_point = Some(i);
-                return;
+               return true
             }
         }
+        false
     }
 
     pub fn release(&mut self) {
