@@ -9,7 +9,7 @@ To build and run the project, navigate to the project directory in your terminal
 
 
 ## Controls
-- Left click to select a point. Drag to move the selected point.
-- Right click to delete a point. Right click anywhere else to add a point.
-- Press the space bar to add a new curve.
-- Use the left and right arrow keys to scrub along time.
+- Left click to **select** a point. Drag to **move** the selected point.
+- Right click to **delete** a point. Right click anywhere else to **add** a point.
+- Press the space bar to add a **new curve**.
+- Use the left and right arrow keys to **scrub along time**.
