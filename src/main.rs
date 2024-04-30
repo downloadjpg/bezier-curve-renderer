@@ -15,7 +15,7 @@ use piston::window::WindowSettings;
 use crate::color_palettes::Palette;
 use bezier::{BezierCurve, BezierRenderer};
 
-// 
+// I swappped between like 4 UI engines and all of them are outdated and hate eachother. God.
 use piston::{Button, ButtonArgs, ButtonEvent, ButtonState, Key, MouseButton, MouseCursorEvent};
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
@@ -75,22 +75,26 @@ fn main() {
     // Create a new game and run it.
     let mut app = App {
         gl: GlGraphics::new(opengl),
-        // bezier curve with 4 points.
+        // basic cubic bezier curve with 4 points.
         curves: vec![BezierCurve::new()],
         palette: Palette::default(),
-        renderer: BezierRenderer::new(),
-        selected_curve: None,
+        renderer: BezierRenderer::new(), // 
+        selected_curve: Some(0), // not just anyone...
         button_states: [ButtonState::Release, ButtonState::Release],
         
     };
 
     let mut events = Events::new(EventSettings::new());
-    let mut cursor = [0.0, 0.0];
+    let mut cursor = [0.0, 0.0]; // keep track of the cursor position for dragging points.
 
-    // Main event loop
+    // Main event loop... what a mess.
     while let Some(e) = events.next(&mut window) {
+
+        // Render the current state of the app.
         if let Some(args) = e.render_args() { app.render(&args); }
-    
+        
+        // Handle input events. -------------------------------------------------------------------
+        // This is a bit of a mess, but it's mostly just passing the input to the right place.
         if let Some(ButtonArgs { button, state, .. }) = e.button_args() {
             handle_button_input(&mut app, button, state, cursor);
         }
@@ -114,6 +118,7 @@ fn main() {
             }
             _ => {}
         }
+        //  -------------------------------------------------------------------
     }
     
     fn handle_button_input(app: &mut App, button: Button, state: ButtonState, cursor: [f64; 2]) {
@@ -129,6 +134,7 @@ fn main() {
                     }
                 }
             }
+            // Delete function
             Button::Mouse(MouseButton::Right) => {
                 if state == ButtonState::Press {
                     handle_right_mouse_button_press(app, cursor);
@@ -151,6 +157,7 @@ fn main() {
         }
     }
     
+    // Right click to delete a point. Right click anywhere else to add a point.
     fn handle_right_mouse_button_press(app: &mut App, cursor: [f64; 2]) {
         for curve in &mut app.curves {
             let remove_point_success = curve.right_click(cursor[0], cursor[1]);
@@ -167,7 +174,8 @@ fn main() {
             selected.add_point(cursor[0], cursor[1]);
         }
     }
-    
+
+    // Space to add a new curve, left and right arrow keys to scrub along time.
     fn handle_keyboard_input(app: &mut App, key: Key, state: ButtonState) {
         match key {
             piston::Key::Space => {
